@@ -20,8 +20,8 @@ public class CalculatorGUI extends JFrame {
                 "7", "8", "9", "/",
                 "4", "5", "6", "*",
                 "1", "2", "3", "-",
-                "0", "C", "=", "+",
-                "Split", "", "", ""
+                "0", ".", "C", "+",
+                "+/-", "=", "Split", ""
         };
 
         for (String btnText : buttons) {
@@ -94,6 +94,10 @@ public class CalculatorGUI extends JFrame {
                         processInput(String.valueOf(keyChar));
                     } else if (keyChar == '+' || keyChar == '-' || keyChar == '*' || keyChar == '/') {
                         processInput(String.valueOf(keyChar));
+                    } else if (keyChar == '.') {
+                        processInput(".");
+                    } else if (keyChar == 'n' || keyChar == 'N') {
+                        processInput("+/-");
                     } else if (keyChar == KeyEvent.VK_ENTER) {
                         processInput("=");
                     } else if (keyChar == 'c' || keyChar == 'C' || e.getKeyCode() == KeyEvent.VK_ESCAPE) {
@@ -113,19 +117,73 @@ public class CalculatorGUI extends JFrame {
             updateHistoryDisplay();
             if (!Double.isNaN(lastResult)) {
                 firstOperand = lastResult;
-                currentExpression = new StringBuilder(String.valueOf(lastResult));
+                currentExpression = new StringBuilder(formatResult(lastResult));
                 displayField.setText(currentExpression.toString());
             }
+        }
+
+        private String formatResult(double result) {
+            String resultStr = String.valueOf(result);
+            if (resultStr.contains(".")) {
+                String fractionalPart = resultStr.substring(resultStr.indexOf(".") + 1);
+                int zeroCount = 0;
+                for (int i = 0; i < fractionalPart.length(); i++) {
+                    if (fractionalPart.charAt(i) == '0') {
+                        zeroCount++;
+                    } else if (fractionalPart.charAt(i) != '0' && zeroCount > 7) {
+                        return String.format("%.2f", result);
+                    } else {
+                        zeroCount = 0;
+                    }
+                }
+            }
+            return resultStr;
         }
 
         public void processInput(String command) {
             if (Character.isDigit(command.charAt(0))) {
                 if (isNewNumber) {
-                    currentExpression = new StringBuilder(operator.isEmpty() ? "" : firstOperand + " " + operator + " ");
+                    currentExpression = new StringBuilder(operator.isEmpty() ? "" : formatResult(firstOperand) + " " + operator + " ");
                     currentExpression.append(command);
                     isNewNumber = false;
                 } else {
                     currentExpression.append(command);
+                }
+                displayField.setText(currentExpression.toString());
+            } else if (command.equals(".")) {
+                String currentNumber = isNewNumber ? "" :
+                        currentExpression.toString().substring(
+                                operator.isEmpty() ? 0 : currentExpression.lastIndexOf(operator) + 2
+                        ).trim();
+                if (!currentNumber.contains(".")) {
+                    if (isNewNumber) {
+                        currentExpression = new StringBuilder(operator.isEmpty() ? "0" : formatResult(firstOperand) + " " + operator + " 0");
+                        isNewNumber = false;
+                    }
+                    currentExpression.append(".");
+                    displayField.setText(currentExpression.toString());
+                }
+            } else if (command.equals("+/-")) {
+                String currentNumber = isNewNumber ?
+                        (operator.isEmpty() ? currentExpression.toString() : formatResult(firstOperand)) :
+                        currentExpression.toString().substring(
+                                operator.isEmpty() ? 0 : currentExpression.lastIndexOf(operator) + 2
+                        ).trim();
+                if (currentNumber.isEmpty() || currentNumber.equals("0")) {
+                    return;
+                }
+                if (currentNumber.startsWith("-")) {
+                    currentNumber = currentNumber.substring(1);
+                } else {
+                    currentNumber = "-" + currentNumber;
+                }
+                if (operator.isEmpty()) {
+                    currentExpression = new StringBuilder(currentNumber);
+                } else {
+                    currentExpression = new StringBuilder(formatResult(firstOperand) + " " + operator + " " + currentNumber);
+                }
+                if (isNewNumber && operator.isEmpty()) {
+                    firstOperand = Double.parseDouble(currentNumber);
                 }
                 displayField.setText(currentExpression.toString());
             } else if (command.equals("C")) {
@@ -136,38 +194,44 @@ public class CalculatorGUI extends JFrame {
                 currentExpression = new StringBuilder();
             } else if (command.equals("=")) {
                 if (!operator.isEmpty()) {
-                    double secondOperand = Double.parseDouble(
-                            currentExpression.toString().substring(
-                                    currentExpression.lastIndexOf(operator) + 2
-                            ).trim()
-                    );
+                    String secondOperandStr = currentExpression.toString().substring(
+                            currentExpression.lastIndexOf(operator) + 2
+                    ).trim();
+                    if (secondOperandStr.isEmpty()) {
+                        return;
+                    }
+                    double secondOperand = Double.parseDouble(secondOperandStr);
                     double result = logic.evaluateExpression(firstOperand, secondOperand, operator);
-                    displayField.setText(String.valueOf(result));
+                    String formattedResult = formatResult(result);
+                    displayField.setText(formattedResult);
                     Expression expr = new Expression(firstOperand, secondOperand, operator, result);
                     logic.addToHistory(expr);
                     updateHistoryDisplay();
                     isNewNumber = true;
                     operator = "";
-                    currentExpression = new StringBuilder(String.valueOf(result));
+                    currentExpression = new StringBuilder(formattedResult);
                     firstOperand = result;
                 }
             } else {
                 if (!operator.isEmpty()) {
-                    double secondOperand = Double.parseDouble(
-                            currentExpression.toString().substring(
-                                    currentExpression.lastIndexOf(operator) + 2
-                            ).trim()
-                    );
-                    double result = logic.evaluateExpression(firstOperand, secondOperand, operator);
-                    Expression expr = new Expression(firstOperand, secondOperand, operator, result);
-                    logic.addToHistory(expr);
-                    updateHistoryDisplay();
-                    firstOperand = result;
+                    String secondOperandStr = currentExpression.toString().substring(
+                            currentExpression.lastIndexOf(operator) + 2
+                    ).trim();
+                    if (!secondOperandStr.isEmpty()) {
+                        double secondOperand = Double.parseDouble(secondOperandStr);
+                        double result = logic.evaluateExpression(firstOperand, secondOperand, operator);
+                        String formattedResult = formatResult(result);
+                        Expression expr = new Expression(firstOperand, secondOperand, operator, result);
+                        logic.addToHistory(expr);
+                        updateHistoryDisplay();
+                        firstOperand = result;
+                        currentExpression = new StringBuilder(formattedResult);
+                    }
                 } else if (currentExpression.length() > 0) {
                     firstOperand = Double.parseDouble(currentExpression.toString().trim());
                 }
                 operator = command;
-                currentExpression = new StringBuilder(firstOperand + " " + operator + " ");
+                currentExpression = new StringBuilder(formatResult(firstOperand) + " " + operator + " ");
                 displayField.setText(currentExpression.toString());
                 isNewNumber = true;
             }
@@ -176,7 +240,12 @@ public class CalculatorGUI extends JFrame {
         private void updateHistoryDisplay() {
             historyArea.setText("");
             for (Expression expr : logic.getHistory()) {
-                historyArea.append(expr.getExpressionString() + "\n");
+                String exprStr = String.format("%s %s %s = %s",
+                        formatResult(expr.getFirstOperand()),
+                        expr.getOperator(),
+                        formatResult(expr.getSecondOperand()),
+                        formatResult(expr.getResult()));
+                historyArea.append(exprStr + "\n");
             }
         }
 

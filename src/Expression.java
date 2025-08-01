@@ -11,6 +11,22 @@ public class Expression {
         this.result = result;
     }
 
+    public double getFirstOperand() {
+        return firstOperand;
+    }
+
+    public double getSecondOperand() {
+        return secondOperand;
+    }
+
+    public String getOperator() {
+        return operator;
+    }
+
+    public double getResult() {
+        return result;
+    }
+
     public String getExpressionString() {
         return firstOperand + " " + operator + " " + secondOperand + " = " + result;
     }
