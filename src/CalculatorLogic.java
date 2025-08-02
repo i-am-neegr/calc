@@ -2,29 +2,35 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CalculatorLogic {
-    private List<Expression> history = new ArrayList<>();
+    private List<Expression> history;
 
-    public double evaluateExpression(double a, double b, String operator) {
+    public CalculatorLogic() {
+        history = new ArrayList<>();
+    }
+
+    public double evaluateExpression(double firstOperand, double secondOperand, String operator) {
         switch (operator) {
             case "+":
-                return a + b;
+                return firstOperand + secondOperand;
             case "-":
-                return a - b;
+                return firstOperand - secondOperand;
             case "*":
-                return a * b;
+                return firstOperand * secondOperand;
             case "/":
-                if (b == 0) throw new ArithmeticException("Division by zero");
-                return a / b;
+                if (secondOperand == 0) {
+                    throw new ArithmeticException("Division by zero");
+                }
+                return firstOperand / secondOperand;
             default:
-                throw new IllegalArgumentException("Invalid operator");
+                throw new IllegalArgumentException("Invalid operator: " + operator);
         }
     }
 
-    public void addToHistory(Expression expr) {
-        history.add(expr);
+    public void addToHistory(Expression expression) {
+        history.add(expression);
     }
 
     public List<Expression> getHistory() {
-        return history;
+        return new ArrayList<>(history);
     }
 }

@@ -10,10 +10,17 @@ public class CalculatorGUI extends JFrame {
 
     public CalculatorGUI() {
         panels = new ArrayList<>();
-        setTitle("Calculator");
+        setTitle("Calc");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(400, 500);
         setLayout(new BorderLayout());
+
+        try {
+            Image icon = Toolkit.getDefaultToolkit().getImage("calculator.png");
+            setIconImage(icon);
+        } catch (Exception e) {
+            System.err.println("Icon not found: " + e.getMessage());
+        }
 
         JPanel buttonPanel = new JPanel(new GridLayout(5, 4, 5, 5));
         String[] buttons = {
@@ -58,7 +65,7 @@ public class CalculatorGUI extends JFrame {
 
             JPanel topPanel = new JPanel(new BorderLayout());
             displayField = new JTextField("0");
-            displayField.setEditable(false);
+            displayField.setEditable(true);
             displayField.setHorizontalAlignment(JTextField.RIGHT);
             displayField.setFont(new Font("Arial", Font.PLAIN, 20));
             topPanel.add(displayField, BorderLayout.CENTER);
@@ -88,20 +95,40 @@ public class CalculatorGUI extends JFrame {
 
             displayField.addKeyListener(new KeyAdapter() {
                 @Override
-                public void keyPressed(KeyEvent e) {
+                public void keyTyped(KeyEvent e) {
                     char keyChar = e.getKeyChar();
                     if (Character.isDigit(keyChar)) {
                         processInput(String.valueOf(keyChar));
-                    } else if (keyChar == '+' || keyChar == '-' || keyChar == '*' || keyChar == '/') {
-                        processInput(String.valueOf(keyChar));
+                        e.consume();
                     } else if (keyChar == '.') {
                         processInput(".");
+                        e.consume();
+                    } else if (keyChar == '+' || keyChar == '-' || keyChar == '*' || keyChar == '/') {
+                        processInput(String.valueOf(keyChar));
+                        e.consume();
+                    } else if (keyChar == '=') {
+                        processInput("=");
+                        e.consume();
+                    } else if (keyChar == 'c' || keyChar == 'C') {
+                        processInput("C");
+                        e.consume();
                     } else if (keyChar == 'n' || keyChar == 'N') {
                         processInput("+/-");
-                    } else if (keyChar == KeyEvent.VK_ENTER) {
+                        e.consume();
+                    }
+                }
+
+                @Override
+                public void keyPressed(KeyEvent e) {
+                    if (e.getKeyCode() == KeyEvent.VK_ENTER) {
                         processInput("=");
-                    } else if (keyChar == 'c' || keyChar == 'C' || e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+                        e.consume();
+                    } else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
                         processInput("C");
+                        e.consume();
+                    } else if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
+                        processBackspace();
+                        e.consume();
                     }
                 }
             });
@@ -231,9 +258,47 @@ public class CalculatorGUI extends JFrame {
                     firstOperand = Double.parseDouble(currentExpression.toString().trim());
                 }
                 operator = command;
-                currentExpression = new StringBuilder(formatResult(firstOperand) + " " + operator + " ");
+                currentExpression = new StringBuilder(formatResult(firstOperand) + " " + command + " ");
                 displayField.setText(currentExpression.toString());
                 isNewNumber = true;
+            }
+        }
+
+        private void processBackspace() {
+            if (currentExpression.length() == 0) {
+                return;
+            }
+            String currentText = currentExpression.toString();
+            if (operator.isEmpty()) {
+                currentExpression = new StringBuilder(currentText.substring(0, currentText.length() - 1));
+                if (currentExpression.length() == 0 || currentExpression.toString().equals("-")) {
+                    currentExpression = new StringBuilder();
+                    firstOperand = 0;
+                    displayField.setText("0");
+                } else {
+                    try {
+                        firstOperand = Double.parseDouble(currentExpression.toString());
+                        displayField.setText(currentExpression.toString());
+                    } catch (NumberFormatException e) {
+                        currentExpression = new StringBuilder();
+                        firstOperand = 0;
+                        displayField.setText("0");
+                    }
+                }
+            } else {
+                String secondPart = currentText.substring(currentText.lastIndexOf(operator) + 2).trim();
+                if (secondPart.isEmpty()) {
+                    currentExpression = new StringBuilder(formatResult(firstOperand));
+                    operator = "";
+                    isNewNumber = false;
+                } else {
+                    secondPart = secondPart.substring(0, secondPart.length() - 1);
+                    currentExpression = new StringBuilder(formatResult(firstOperand) + " " + operator + " " + secondPart);
+                    if (secondPart.isEmpty()) {
+                        isNewNumber = true;
+                    }
+                }
+                displayField.setText(currentExpression.toString());
             }
         }
 
@@ -256,6 +321,7 @@ public class CalculatorGUI extends JFrame {
                     return Double.parseDouble(displayText);
                 }
             } catch (NumberFormatException e) {
+                return Double.NaN;
             }
             return Double.NaN;
         }
@@ -339,7 +405,6 @@ public class CalculatorGUI extends JFrame {
         @Override
         public void actionPerformed(ActionEvent e) {
             String command = e.getActionCommand();
-
             if (command.equals("Split")) {
                 if (activePanel != null) {
                     activePanel.split();

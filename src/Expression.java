@@ -26,8 +26,4 @@ public class Expression {
     public double getResult() {
         return result;
     }
-
-    public String getExpressionString() {
-        return firstOperand + " " + operator + " " + secondOperand + " = " + result;
-    }
 }
