@@ -1,3 +1,8 @@
+package gui;
+
+import logic.CalculatorLogic;
+import models.Expression;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -16,7 +21,7 @@ public class CalculatorGUI extends JFrame {
         setLayout(new BorderLayout());
 
         try {
-            Image icon = Toolkit.getDefaultToolkit().getImage("calculator.png");
+            Image icon = Toolkit.getDefaultToolkit().getImage("data/calculator.png");
             setIconImage(icon);
         } catch (Exception e) {
             System.err.println("Icon not found: " + e.getMessage());

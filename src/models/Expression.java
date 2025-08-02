@@ -1,3 +1,5 @@
+package models;
+
 public class Expression {
     private double firstOperand;
     private double secondOperand;
@@ -25,5 +27,9 @@ public class Expression {
 
     public double getResult() {
         return result;
+    }
+
+    public String getExpressionString() {
+        return firstOperand + " " + operator + " " + secondOperand + " = " + result;
     }
 }

@@ -1,3 +1,8 @@
+package tests;
+
+import logic.CalculatorLogic;
+import models.Expression;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -43,7 +48,7 @@ public class CalculatorLogicTest {
     public void testHistory() {
         logic.evaluateExpression(5.0, 3.0, "+");
         logic.addToHistory(new Expression(5.0, 3.0, "+", 8.0));
-        assertEquals(1, logic.getHistory().size());
-        assertEquals("5.0 + 3.0 = 8.0", logic.getHistory().get(0).getExpressionString());
+        Assert.assertEquals(1, logic.getHistory().size());
+        Assert.assertEquals("5.0 + 3.0 = 8.0", logic.getHistory().get(0).getExpressionString());
     }
 }
